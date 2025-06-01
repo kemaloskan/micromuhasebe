@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../core/providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,14 +13,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
+  bool _rememberMe = false;
 
   @override
   void initState() {
     super.initState();
-    // Geçici olarak otomatik doldurma
-    _emailController.text = 'admin@webfinans.com';
-    _passwordController.text = 'admin123';
+    // Demo veriler - gerçek uygulamada kaldırın
+    _emailController.text = 'admin@example.com';
+    _passwordController.text = 'password';
   }
 
   @override
@@ -31,28 +33,36 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    final authProvider = context.read<AuthProvider>();
+    
+    // Clear previous errors
+    authProvider.clearError();
 
-    try {
-      // Login işlemi simülasyonu
-      await Future.delayed(const Duration(seconds: 2));
-      
-      if (!mounted) return;
-      
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } catch (e) {
-      if (!mounted) return;
-      
+    final success = await authProvider.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+      rememberMe: _rememberMe,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      // Navigation is handled by AuthWrapper in main.dart
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Giriş başarılı!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      // Show error message
+      final errorMessage = authProvider.errorMessage ?? 'Giriş başarısız';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Giriş hatası: ${e.toString()}'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
   }
 
@@ -73,18 +83,76 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Icon(
                     Icons.account_balance,
                     size: 64,
-                    color: Colors.blue,
+                    color: Color(0xFF696CFF),
                   ),
                   const SizedBox(height: 32),
                   const Text(
-                    'Webfinans',
+                    'Webfinans ERP',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF566A7F),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Hesabınıza giriş yapın',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFFA5A3AE),
                     ),
                   ),
                   const SizedBox(height: 32),
+                  
+                  // Demo Accounts Info
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE7E7FF).withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF696CFF).withOpacity(0.3)),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Color(0xFF696CFF), size: 16),
+                            SizedBox(width: 8),
+                            Text(
+                              'Demo Mode - Offline Çalışma',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF696CFF),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Tüm hesaplar için şifre: password',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF566A7F), fontWeight: FontWeight.w600),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '• admin@example.com (Yönetici)',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF566A7F)),
+                        ),
+                        Text(
+                          '• manager@example.com (Müdür)',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF566A7F)),
+                        ),
+                        Text(
+                          '• user@example.com (Kullanıcı)',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF566A7F)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
                   TextFormField(
                     controller: _emailController,
                     decoration: const InputDecoration(
@@ -114,27 +182,76 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Şifre gerekli';
                       }
-                      if (value.length < 6) {
-                        return 'Şifre en az 6 karakter olmalı';
-                      }
                       return null;
                     },
                   ),
+                  const SizedBox(height: 16),
+                  
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            _rememberMe = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('Beni hatırla'),
+                    ],
+                  ),
+                  
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('Giriş Yap'),
+                  
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      return ElevatedButton(
+                        onPressed: authProvider.isLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
+                        ),
+                        child: authProvider.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text('Giriş Yap'),
+                      );
+                    },
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      if (authProvider.errorMessage != null) {
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  authProvider.errorMessage!,
+                                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
                 ],
               ),
