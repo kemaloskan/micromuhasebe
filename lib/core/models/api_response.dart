@@ -1,12 +1,7 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'api_response.g.dart';
-
-@JsonSerializable()
-class ApiResponse {
+class ApiResponse<T> {
   final bool success;
   final String message;
-  final Map<String, dynamic>? data;
+  final T? data;
   final Map<String, dynamic>? errors;
   final Map<String, dynamic>? meta;
 
@@ -18,16 +13,13 @@ class ApiResponse {
     this.meta,
   });
 
-  factory ApiResponse.fromJson(Map<String, dynamic> json) => _$ApiResponseFromJson(json);
-  Map<String, dynamic> toJson() => _$ApiResponseToJson(this);
-
   // Success response factory
   factory ApiResponse.success({
     required String message,
-    Map<String, dynamic>? data,
+    T? data,
     Map<String, dynamic>? meta,
   }) {
-    return ApiResponse(
+    return ApiResponse<T>(
       success: true,
       message: message,
       data: data,
@@ -39,9 +31,9 @@ class ApiResponse {
   factory ApiResponse.error({
     required String message,
     Map<String, dynamic>? errors,
-    Map<String, dynamic>? data,
+    T? data,
   }) {
-    return ApiResponse(
+    return ApiResponse<T>(
       success: false,
       message: message,
       errors: errors,
@@ -50,21 +42,15 @@ class ApiResponse {
   }
 }
 
-@JsonSerializable()
 class PaginatedData {
   final List<Map<String, dynamic>> data;
-  @JsonKey(name: 'current_page')
   final int currentPage;
-  @JsonKey(name: 'last_page')
   final int lastPage;
-  @JsonKey(name: 'per_page')
   final int perPage;
   final int total;
   final int from;
   final int to;
-  @JsonKey(name: 'next_page_url')
   final String? nextPageUrl;
-  @JsonKey(name: 'prev_page_url')
   final String? prevPageUrl;
 
   const PaginatedData({
@@ -78,9 +64,6 @@ class PaginatedData {
     this.nextPageUrl,
     this.prevPageUrl,
   });
-
-  factory PaginatedData.fromJson(Map<String, dynamic> json) => _$PaginatedDataFromJson(json);
-  Map<String, dynamic> toJson() => _$PaginatedDataToJson(this);
 
   bool get hasNextPage => nextPageUrl != null;
   bool get hasPrevPage => prevPageUrl != null;

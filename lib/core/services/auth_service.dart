@@ -127,7 +127,6 @@ class AuthService {
       await Future.delayed(const Duration(milliseconds: 800));
 
       final email = loginRequest.email;
-      const password = 'password'; // Demo password
 
       if (_demoUsers.containsKey(email)) {
         final userData = _demoUsers[email]!;

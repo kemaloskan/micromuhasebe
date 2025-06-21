@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/auth_provider.dart';
+import '../core/constants/app_constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,8 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     // Demo veriler - gerçek uygulamada kaldırın
-    _emailController.text = 'admin@example.com';
-    _passwordController.text = 'password';
+    _emailController.text = AppConstants.adminEmail;
+    _passwordController.text = AppConstants.demoPassword;
   }
 
   @override
@@ -50,13 +51,13 @@ class _LoginScreenState extends State<LoginScreen> {
       // Navigation is handled by AuthWrapper in main.dart
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Giriş başarılı!'),
+          content: Text(SuccessMessages.loginSuccess),
           backgroundColor: Colors.green,
         ),
       );
     } else {
       // Show error message
-      final errorMessage = authProvider.errorMessage ?? 'Giriş başarısız';
+      final errorMessage = authProvider.errorMessage ?? ErrorMessages.invalidCredentials;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -87,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
                   const Text(
-                    'Webfinans ERP',
+                    AppConstants.appName,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
@@ -110,14 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE7E7FF).withOpacity(0.3),
+                      color: const Color(0xFFE7E7FF).withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF696CFF).withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFF696CFF).withValues(alpha: 0.3)),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        const Row(
                           children: [
                             Icon(Icons.info_outline, color: Color(0xFF696CFF), size: 16),
                             SizedBox(width: 8),
@@ -130,22 +131,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          'Tüm hesaplar için şifre: password',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF566A7F), fontWeight: FontWeight.w600),
+                          'Tüm hesaplar için şifre: ${AppConstants.demoPassword}',
+                          style: const TextStyle(
+                            fontSize: 12, 
+                            color: Color(0xFF566A7F), 
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          '• admin@example.com (Yönetici)',
+                        const SizedBox(height: 4),
+                        const Text(
+                          '• ${AppConstants.adminEmail} (Yönetici)',
                           style: TextStyle(fontSize: 12, color: Color(0xFF566A7F)),
                         ),
-                        Text(
-                          '• manager@example.com (Müdür)',
+                        const Text(
+                          '• ${AppConstants.managerEmail} (Müdür)',
                           style: TextStyle(fontSize: 12, color: Color(0xFF566A7F)),
                         ),
-                        Text(
-                          '• user@example.com (Kullanıcı)',
+                        const Text(
+                          '• ${AppConstants.userEmail} (Kullanıcı)',
                           style: TextStyle(fontSize: 12, color: Color(0xFF566A7F)),
                         ),
                       ],
@@ -162,10 +167,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'E-posta adresi gerekli';
+                        return ErrorMessages.emailRequired;
                       }
                       if (!value.contains('@')) {
-                        return 'Geçerli bir e-posta adresi girin';
+                        return ErrorMessages.invalidEmail;
                       }
                       return null;
                     },
@@ -180,7 +185,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Şifre gerekli';
+                        return ErrorMessages.passwordRequired;
+                      }
+                      if (value.length < AppConstants.minPasswordLength) {
+                        return ErrorMessages.passwordTooShort;
                       }
                       return null;
                     },
@@ -200,7 +208,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text('Beni hatırla'),
                     ],
                   ),
-                  
                   const SizedBox(height: 24),
                   
                   Consumer<AuthProvider>(
@@ -208,7 +215,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       return ElevatedButton(
                         onPressed: authProvider.isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
+                          minimumSize: const Size(double.infinity, 48),
+                          backgroundColor: const Color(0xFF696CFF),
+                          foregroundColor: Colors.white,
                         ),
                         child: authProvider.isLoading
                             ? const SizedBox(
@@ -221,36 +230,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : const Text('Giriş Yap'),
                       );
-                    },
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  Consumer<AuthProvider>(
-                    builder: (context, authProvider, child) {
-                      if (authProvider.errorMessage != null) {
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  authProvider.errorMessage!,
-                                  style: const TextStyle(color: Colors.red, fontSize: 14),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
                     },
                   ),
                 ],
